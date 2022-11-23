@@ -7,6 +7,8 @@ public class CameraScript : MonoBehaviour
     public Transform target;
     void Update()
     {
-        transform.position = new Vector3(transform.position.x, 0, -10);
+        var position = transform.position;
+        position.x = target.transform.position.x;
+        transform.position = position;
     }
 }
