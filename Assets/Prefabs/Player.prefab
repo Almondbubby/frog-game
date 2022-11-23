@@ -125,6 +125,9 @@ MonoBehaviour:
   lr: {fileID: 4518941338990320296}
   dj: {fileID: 6275018996047562060}
   cam: {fileID: 0}
+  ld:
+    serializedVersion: 2
+    m_Bits: 8
 --- !u!120 &4518941338990320296
 LineRenderer:
   m_ObjectHideFlags: 0
