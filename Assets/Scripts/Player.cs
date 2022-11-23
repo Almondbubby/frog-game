@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
+    public LineRenderer lr;
     public DistanceJoint2D dj;
     public Camera cam;
 
@@ -23,13 +24,19 @@ public class Player : MonoBehaviour
         {
             dj.enabled = true;
             dj.connectedAnchor = mousePos;
-
+            lr.enabled = true;
+            lr.SetPosition(0, transform.position);
+            lr.SetPosition(1, mousePos);
         }
         else if (Input.GetKeyUp(KeyCode.Mouse0))
         {
             dj.enabled = false;
+            lr.enabled = false;
         }
 
-   
+        if (dj.enabled)
+        {
+            lr.SetPosition(0, transform.position);
+        }
     }
 }

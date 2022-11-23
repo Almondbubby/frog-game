@@ -265,7 +265,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1531040285}
   - component: {fileID: 1531040284}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Platform
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -353,7 +353,7 @@ PrefabInstance:
     - target: {fileID: 6302645149298012440, guid: 0d791362a9805434ab97534753496133, type: 3}
       propertyPath: dj
       value: 
-      objectReference: {fileID: 1114730141254048027}
+      objectReference: {fileID: 1114730141254048032}
     - target: {fileID: 6302645149298012440, guid: 0d791362a9805434ab97534753496133, type: 3}
       propertyPath: lr
       value: 
@@ -408,11 +408,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 0d791362a9805434ab97534753496133, type: 3}
---- !u!232 &1114730141254048027 stripped
-DistanceJoint2D:
-  m_CorrespondingSourceObject: {fileID: 6275018996047562060, guid: 0d791362a9805434ab97534753496133, type: 3}
-  m_PrefabInstance: {fileID: 1114730141254048026}
-  m_PrefabAsset: {fileID: 0}
 --- !u!120 &1114730141254048028 stripped
 LineRenderer:
   m_CorrespondingSourceObject: {fileID: 4518941338990320296, guid: 0d791362a9805434ab97534753496133, type: 3}
@@ -421,5 +416,10 @@ LineRenderer:
 --- !u!4 &1114730141254048031 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7807013246897598149, guid: 0d791362a9805434ab97534753496133, type: 3}
+  m_PrefabInstance: {fileID: 1114730141254048026}
+  m_PrefabAsset: {fileID: 0}
+--- !u!232 &1114730141254048032 stripped
+DistanceJoint2D:
+  m_CorrespondingSourceObject: {fileID: 6275018996047562060, guid: 0d791362a9805434ab97534753496133, type: 3}
   m_PrefabInstance: {fileID: 1114730141254048026}
   m_PrefabAsset: {fileID: 0}
