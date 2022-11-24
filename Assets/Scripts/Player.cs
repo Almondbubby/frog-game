@@ -1,23 +1,93 @@
 using System.Collections;
 using System.Collections.Generic;
+using System;
 using UnityEngine;
 
 public class Player : MonoBehaviour
 {
+    public Rigidbody2D rb;
     public LineRenderer lr;
     public DistanceJoint2D dj;
     public Camera cam;
     public float moveSpeed = 200.0f;
     private bool go = false; //whether or not to move closer to mouse (grapple)
+
+
+    //movement
+    public float xAcceleration, xTopSpeed, jumpVelocity; //time unit is seconds
+    public float reelInGrappleSpeed;
+    private float vx, vy, ax, ay; // vx/vy is velocity and ax/ay is acceleration
+    private int xInput, yInput;
+
+
+
+    //state management
+    public enum states {
+        grounded,
+        airborne,
+        grappling,
+        
+    };
+    private enum actions {
+        groundMove,
+        airMove,
+        jump,
+        grapple,
+        exitGrapple,
+        reelInGrapple,
+    }
+    private actions curAction; private states curState;
+    private Dictionary<Enum, List<Enum>> stateMap = new Dictionary<Enum, List<Enum>> {
+        {states.grounded, new List<Enum>() {actions.groundMove, actions.jump, actions.grapple}},
+        {states.airborne, new List<Enum>() {actions.airMove, actions.grapple}},
+        {states.grappling, new List<Enum>() {actions.exitGrapple}}
+    };
+
+    bool canDoAction(Enum action) {
+        return stateMap[curState].Contains(action);
+    }
+
+
+
     private void Start()
     {
-        dj.enabled = false;
+        // dj.enabled = false;
     }
     void Update()
     {
-        swing();
+        //swing();
         grapple();
+
+        if (Input.GetKey(KeyCode.Space)) {
+            reelInGrapple();
+        }
     }
+
+    void reelInGrapple() {
+        Vector2 direction = (Vector2)Vector3.Normalize(dj.connectedBody.transform.position - transform.position);
+        print(dj.connectedBody);
+        rb.velocity += direction * reelInGrappleSpeed;
+    }
+
+    void grapple() {
+        Vector2 mousePos = (Vector2)cam.ScreenToWorldPoint(Input.mousePosition);
+
+        if (Input.GetKey(KeyCode.Mouse0)) {
+            RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector3.Normalize(mousePos - (Vector2)transform.position));
+            if (!hit.rigidbody) return;
+            lr.SetPositions(new Vector3[] {transform.position, hit.transform.position});
+            dj.connectedBody = hit.rigidbody;
+        }
+
+        else release();
+
+    }
+
+    void release() {
+        lr.SetPositions(new Vector3[] {transform.position, transform.position});
+        dj.connectedBody = rb;
+    }
+
 
     void swing()
     {
@@ -60,37 +130,37 @@ public class Player : MonoBehaviour
             lr.SetPosition(0, transform.position);
         }
     }
-    void grapple()
-    {
-        Vector2 mousePos = (Vector2)cam.ScreenToWorldPoint(Input.mousePosition);
-        if (Input.GetKeyDown(KeyCode.Mouse1))
-        {
-            RaycastHit2D hit = Physics2D.Raycast(transform.position, mousePos - (Vector2)transform.position);
-            RaycastHit2D check = Physics2D.Raycast(mousePos, Vector2.zero);
-            bool good = true;
-            if (hit.collider != null && hit.collider.gameObject.layer != 3)
-            {
-                good = false;
-            }
+    // void grapple()
+    // {
+    //     Vector2 mousePos = (Vector2)cam.ScreenToWorldPoint(Input.mousePosition);
+    //     if (Input.GetKeyDown(KeyCode.Mouse1))
+    //     {
+    //         RaycastHit2D hit = Physics2D.Raycast(transform.position, mousePos - (Vector2)transform.position);
+    //         RaycastHit2D check = Physics2D.Raycast(mousePos, Vector2.zero);
+    //         bool good = true;
+    //         if (hit.collider != null && hit.collider.gameObject.layer != 3)
+    //         {
+    //             good = false;
+    //         }
 
-            if (hit.collider != null && hit.collider.gameObject.layer == 3 && good && check.collider != null)
-            {
-                go = true;
-                lr.enabled = true;
-                lr.SetPosition(0, transform.position);
-                lr.SetPosition(1, mousePos);
-            }
-        }
-        if (Input.GetKeyUp(KeyCode.Mouse1))
-        {
-            lr.enabled = false;
-            go = false;
-        }
+    //         if (hit.collider != null && hit.collider.gameObject.layer == 3 && good && check.collider != null)
+    //         {
+    //             go = true;
+    //             lr.enabled = true;
+    //             lr.SetPosition(0, transform.position);
+    //             lr.SetPosition(1, mousePos);
+    //         }
+    //     }
+    //     if (Input.GetKeyUp(KeyCode.Mouse1))
+    //     {
+    //         lr.enabled = false;
+    //         go = false;
+    //     }
 
-        if (go)
-        {
-            lr.SetPosition(0, transform.position);
-            transform.position = Vector2.MoveTowards(transform.position, mousePos, moveSpeed * Time.deltaTime);
-        }
-    }
+    //     if (go)
+    //     {
+    //         lr.SetPosition(0, transform.position);
+    //         transform.position = Vector2.MoveTowards(transform.position, mousePos, moveSpeed * Time.deltaTime);
+    //     }
+    // }
 }
