@@ -12,6 +12,8 @@ public class Player : MonoBehaviour
     public float moveSpeed = 200.0f;
     private bool go = false; //whether or not to move closer to mouse (grapple)
 
+    public int health = 3;
+
 
     //movement
     public float xAcceleration, xTopSpeed, jumpVelocity; //time unit is seconds
@@ -117,6 +119,28 @@ public class Player : MonoBehaviour
 
     }
 
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if(collision.gameObject.tag == "Enemy")
+        {
+            damage(1);
+        }
+    }
+
+    void damage(int dmg)
+    {
+        health -= dmg;
+        Debug.Log(health);
+        if(health <= 0)
+        {
+            dead();
+        }
+    }
+
+    void dead()
+    {
+        Destroy(this);
+    }
 
     // void swing()
     // {
@@ -145,7 +169,7 @@ public class Player : MonoBehaviour
     //             lr.SetPosition(1, mousePos);
     //         }
 
-       
+
     //     }
     //     else if (Input.GetKeyUp(KeyCode.Mouse0))
     //     {
