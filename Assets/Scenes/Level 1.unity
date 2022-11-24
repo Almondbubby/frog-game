@@ -647,7 +647,7 @@ PrefabInstance:
       objectReference: {fileID: 1097317223}
     - target: {fileID: 6302645149298012440, guid: 0d791362a9805434ab97534753496133, type: 3}
       propertyPath: reelInGrappleSpeed
-      value: 10
+      value: 0.01
       objectReference: {fileID: 0}
     - target: {fileID: 7190439557151463066, guid: 0d791362a9805434ab97534753496133, type: 3}
       propertyPath: m_AngularDrag
@@ -655,7 +655,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7190439557151463066, guid: 0d791362a9805434ab97534753496133, type: 3}
       propertyPath: m_GravityScale
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7807013246897598149, guid: 0d791362a9805434ab97534753496133, type: 3}
       propertyPath: m_RootOrder

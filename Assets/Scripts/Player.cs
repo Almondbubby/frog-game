@@ -53,7 +53,7 @@ public class Player : MonoBehaviour
     {
         // dj.enabled = false;
     }
-    void Update()
+    void FixedUpdate()
     {
         //swing();
         grapple();
@@ -64,9 +64,7 @@ public class Player : MonoBehaviour
     }
 
     void reelInGrapple() {
-        Vector2 direction = (Vector2)Vector3.Normalize(dj.connectedBody.transform.position - transform.position);
-        print(dj.connectedBody);
-        rb.velocity += direction * reelInGrappleSpeed;
+        dj.distance -= reelInGrappleSpeed;
     }
 
     void grapple() {
@@ -74,8 +72,8 @@ public class Player : MonoBehaviour
 
         if (Input.GetKey(KeyCode.Mouse0)) {
             RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector3.Normalize(mousePos - (Vector2)transform.position));
+            lr.SetPositions(new Vector3[] {transform.position, dj.connectedBody.transform.position});
             if (!hit.rigidbody) return;
-            lr.SetPositions(new Vector3[] {transform.position, hit.transform.position});
             dj.connectedBody = hit.rigidbody;
         }
 
