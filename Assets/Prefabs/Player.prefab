@@ -122,12 +122,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4d4633c81fb6e94439a4f3f0180fda3f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  rb: {fileID: 7190439557151463066}
   lr: {fileID: 4518941338990320296}
   dj: {fileID: 6275018996047562060}
   cam: {fileID: 0}
-  ld:
-    serializedVersion: 2
-    m_Bits: 8
+  moveSpeed: 200
+  xAcceleration: 0
+  xTopSpeed: 0
+  jumpVelocity: 0
+  reelInGrappleVelocity: 0
 --- !u!120 &4518941338990320296
 LineRenderer:
   m_ObjectHideFlags: 0
