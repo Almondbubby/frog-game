@@ -9,7 +9,6 @@ public class Player : MonoBehaviour
     public LineRenderer lr;
     public DistanceJoint2D dj;
     public Camera cam;
-    private bool go = false; //whether or not to move closer to mouse (grapple)
 
     public int health = 3;
 
@@ -23,6 +22,7 @@ public class Player : MonoBehaviour
         right,
     }
     private direction curDirection = direction.right;
+
 
     //grappling
     public float reelInGrappleVelocity;
@@ -72,6 +72,7 @@ public class Player : MonoBehaviour
     {
         curState = states.airborne;
     }
+
     void FixedUpdate()
     {
 
@@ -108,7 +109,7 @@ public class Player : MonoBehaviour
         else reelInBuiltUpVelocity = 0;
 
         //Debug
-        // print(curState);
+        print(curState);
     }
 
     void reelInGrapple() {

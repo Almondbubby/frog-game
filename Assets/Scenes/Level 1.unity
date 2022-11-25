@@ -191,6 +191,16 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!50 &169592970 stripped
+Rigidbody2D:
+  m_CorrespondingSourceObject: {fileID: 7190439557151463066, guid: 0d791362a9805434ab97534753496133, type: 3}
+  m_PrefabInstance: {fileID: 1951185022}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &169592972 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7807013246897598149, guid: 0d791362a9805434ab97534753496133, type: 3}
+  m_PrefabInstance: {fileID: 1951185022}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &334408557
 GameObject:
   m_ObjectHideFlags: 0
@@ -511,7 +521,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e5f4d2f84da91d844956bb78d8cbb70f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  target: {fileID: 0}
+  target: {fileID: 169592972}
 --- !u!114 &1097317226
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -689,9 +699,13 @@ PrefabInstance:
       propertyPath: m_Name
       value: Player
       objectReference: {fileID: 0}
+    - target: {fileID: 4674133670770675756, guid: 0d791362a9805434ab97534753496133, type: 3}
+      propertyPath: m_Layer
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 6275018996047562060, guid: 0d791362a9805434ab97534753496133, type: 3}
       propertyPath: m_Distance
-      value: 0.005
+      value: 0.43386883
       objectReference: {fileID: 0}
     - target: {fileID: 6275018996047562060, guid: 0d791362a9805434ab97534753496133, type: 3}
       propertyPath: m_ConnectedAnchor.x
@@ -700,6 +714,38 @@ PrefabInstance:
     - target: {fileID: 6275018996047562060, guid: 0d791362a9805434ab97534753496133, type: 3}
       propertyPath: m_ConnectedAnchor.y
       value: -0.084189534
+      objectReference: {fileID: 0}
+    - target: {fileID: 6275018996047562060, guid: 0d791362a9805434ab97534753496133, type: 3}
+      propertyPath: m_ConnectedRigidBody
+      value: 
+      objectReference: {fileID: 169592970}
+    - target: {fileID: 6302645149298012440, guid: 0d791362a9805434ab97534753496133, type: 3}
+      propertyPath: cam
+      value: 
+      objectReference: {fileID: 1097317223}
+    - target: {fileID: 6302645149298012440, guid: 0d791362a9805434ab97534753496133, type: 3}
+      propertyPath: jumpSpeed
+      value: 15
+      objectReference: {fileID: 0}
+    - target: {fileID: 6302645149298012440, guid: 0d791362a9805434ab97534753496133, type: 3}
+      propertyPath: airMoveSpeed
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 6302645149298012440, guid: 0d791362a9805434ab97534753496133, type: 3}
+      propertyPath: groundMoveSpeed
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 6302645149298012440, guid: 0d791362a9805434ab97534753496133, type: 3}
+      propertyPath: reelInGrappleVelocity
+      value: 0.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7190439557151463066, guid: 0d791362a9805434ab97534753496133, type: 3}
+      propertyPath: m_AngularDrag
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7190439557151463066, guid: 0d791362a9805434ab97534753496133, type: 3}
+      propertyPath: m_GravityScale
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 7807013246897598149, guid: 0d791362a9805434ab97534753496133, type: 3}
       propertyPath: m_RootOrder
