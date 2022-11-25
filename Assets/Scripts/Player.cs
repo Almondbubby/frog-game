@@ -9,12 +9,11 @@ public class Player : MonoBehaviour
     public LineRenderer lr;
     public DistanceJoint2D dj;
     public Camera cam;
-    public float moveSpeed = 200.0f;
     private bool go = false; //whether or not to move closer to mouse (grapple)
 
 
     //movement
-    public float xAcceleration, xTopSpeed, jumpVelocity; //time unit is seconds
+    public float groundMoveSpeed, airMoveSpeed, jumpSpeed; //time unit is seconds
     private float vx, vy, ax, ay; // vx/vy is velocity and ax/ay is acceleration
     private int xInput, yInput;
     private enum direction {
@@ -26,6 +25,7 @@ public class Player : MonoBehaviour
     //grappling
     public float reelInGrappleVelocity;
     private float reelInBuiltUpVelocity;
+    private Vector2 connectionPoint;
     
 
 
@@ -72,16 +72,41 @@ public class Player : MonoBehaviour
     }
     void FixedUpdate()
     {
-        print(curState);
 
+        xInput = Math.Sign(Input.GetAxis("Horizontal"));
+        yInput = Math.Sign(Input.GetAxis("Vertical"));
+
+
+        // make sure the game knows when the player is grounded or not
         if (curState == states.airborne && isGrounded()) curState = states.grounded;
         if (curState == states.grounded && !isGrounded()) curState = states.airborne;
+
+        // if the player is grounded then move with the grounded move stats
+        if (canDoAction(actions.groundMove)) {
+            rb.velocity += groundMoveSpeed * xInput * Vector2.right * Time.fixedDeltaTime;
+        }
+
+        if (canDoAction(actions.jump) && yInput == 1) {
+            rb.velocity += jumpSpeed * Vector2.up;
+            curState = states.airborne;
+        }
+
+
+        // if the player is not grounded then move with the air move stats
+        
+        if (canDoAction(actions.airMove)) {
+            rb.velocity += airMoveSpeed * xInput * Vector2.right * Time.fixedDeltaTime;
+        }
+
 
         if (Input.GetKey(KeyCode.Mouse0) && canDoAction(actions.grapple)) grapple();
         else if (canDoAction(actions.exitGrapple)) release();
 
         if (Input.GetKey(KeyCode.Space) && canDoAction(actions.reelInGrapple)) reelInGrapple();
         else reelInBuiltUpVelocity = 0;
+
+        //Debug
+        // print(curState);
     }
 
     void reelInGrapple() {
@@ -92,28 +117,43 @@ public class Player : MonoBehaviour
 
     void grapple() {
 
-        curState = states.grappling;
-
         Vector2 mousePos = (Vector2)cam.ScreenToWorldPoint(Input.mousePosition);
         Vector2 playerToMouseDistance = mousePos - (Vector2)transform.position;
         
         RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector3.Normalize(playerToMouseDistance), playerToMouseDistance.magnitude);
-        lr.SetPositions(new Vector3[] {transform.position, dj.connectedBody.transform.position});
         
+        if (connectionPoint != Vector2.zero)
+            lr.SetPositions(new Vector3[] {transform.position, connectionPoint});
+
         if (!hit.rigidbody) return;
 
-        dj.connectedBody = hit.rigidbody;
+        if (curState != states.grappling) {
+            dj.connectedBody = hit.rigidbody;
+            connectionPoint = hit.point;
+
+
+            print(connectionPoint);
+            print(dj.connectedBody.transform.position);
+
+            dj.connectedAnchor = new Vector2((connectionPoint.x/2) - dj.connectedBody.transform.position.x, 0f);
+        }
+        
+        curState = states.grappling;
 
     }
 
     void release() {
+
         if (isGrounded()) curState = states.grounded;
         if (!isGrounded()) curState = states.airborne;
         
         rb.velocity += (Vector2)(dj.connectedBody.transform.position - transform.position) * reelInBuiltUpVelocity;
         reelInBuiltUpVelocity = 0;
         lr.SetPositions(new Vector3[] {transform.position, transform.position});
+        
         dj.connectedBody = rb;
+        dj.connectedAnchor = Vector2.zero;
+        connectionPoint = Vector2.zero;
 
     }
 
