@@ -749,7 +749,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6302645149298012440, guid: 0d791362a9805434ab97534753496133, type: 3}
       propertyPath: maxGroundMoveSpeed
-      value: 20
+      value: 15
       objectReference: {fileID: 0}
     - target: {fileID: 6302645149298012440, guid: 0d791362a9805434ab97534753496133, type: 3}
       propertyPath: reelInGrappleVelocity

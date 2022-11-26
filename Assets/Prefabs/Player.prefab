@@ -102,7 +102,7 @@ Rigidbody2D:
   m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0
   m_Mass: 1
-  m_LinearDrag: 0
+  m_LinearDrag: 0.05
   m_AngularDrag: 0.05
   m_GravityScale: 1
   m_Material: {fileID: 0}
@@ -126,11 +126,13 @@ MonoBehaviour:
   lr: {fileID: 4518941338990320296}
   dj: {fileID: 6275018996047562060}
   cam: {fileID: 0}
-  moveSpeed: 200
-  xAcceleration: 0
-  xTopSpeed: 0
-  jumpVelocity: 0
-  reelInGrappleVelocity: 0
+  health: 3
+  groundMoveSpeed: 10
+  maxGroundMoveSpeed: 15
+  airMoveSpeed: 10
+  maxAirMoveSpeed: 100
+  jumpSpeed: 26
+  reelInGrappleVelocity: 0.2
 --- !u!120 &4518941338990320296
 LineRenderer:
   m_ObjectHideFlags: 0
@@ -273,5 +275,5 @@ DistanceJoint2D:
   m_Anchor: {x: 0, y: 0}
   m_ConnectedAnchor: {x: 0, y: 0}
   m_AutoConfigureDistance: 1
-  m_Distance: 0.005
+  m_Distance: 0.43386883
   m_MaxDistanceOnly: 0
