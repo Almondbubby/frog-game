@@ -14,7 +14,7 @@ public class Player : MonoBehaviour
 
 
     //movement
-    public float groundMoveSpeed, airMoveSpeed, jumpSpeed; //time unit is seconds
+    public float groundMoveSpeed, maxGroundMoveSpeed, airMoveSpeed, maxAirMoveSpeed, jumpSpeed; //currently not using a mxAirMoveSpeed
     private float vx, vy, ax, ay; // vx/vy is velocity and ax/ay is acceleration
     private int xInput, yInput;
     private enum direction {
@@ -61,7 +61,7 @@ public class Player : MonoBehaviour
 
 
     bool isGrounded() {  //generates a box slighty below the player and checks if it hit a collider (box casting)
-        Collider2D hit = Physics2D.BoxCast((Vector2)(transform.position), new Vector2(Math.Abs(transform.localScale.x) * 0.7f, transform.localScale.y), 0, -Vector2.up, 0.01f).collider;
+        Collider2D hit = Physics2D.BoxCast((Vector2)transform.position, new Vector2(Math.Abs(transform.localScale.x) * 0.7f, transform.localScale.y), 0, -Vector2.up, 0.05f).collider;
         if (hit != null && hit.isTrigger == false) return true;
         return false;
     }
@@ -86,7 +86,19 @@ public class Player : MonoBehaviour
 
         // if the player is grounded then move with the grounded move stats
         if (canDoAction(actions.groundMove)) {
-            rb.velocity += groundMoveSpeed * xInput * Vector2.right * Time.fixedDeltaTime;
+
+            // make sure the player doesn't slide when there is no input in the direction it is going
+            if (xInput == 0 || Math.Sign(xInput) != Math.Sign(rb.velocity.x)) rb.velocity = Vector2.zero;
+
+            // apply movement
+            if (groundMoveSpeed * xInput * Time.fixedDeltaTime < maxGroundMoveSpeed) 
+                rb.velocity += groundMoveSpeed * xInput * Vector2.right * Time.fixedDeltaTime;
+            else 
+                rb.velocity = maxGroundMoveSpeed * xInput * Vector2.right * Time.fixedDeltaTime;
+
+            // manage which direction the player is facing
+            if (rb.velocity.x < 0) curDirection = direction.left;
+            if (rb.velocity.x > 0) curDirection = direction.right;           
         }
 
         if (canDoAction(actions.jump) && yInput == 1) {
@@ -110,6 +122,7 @@ public class Player : MonoBehaviour
 
         //Debug
         print(curState);
+        // print(curDirection);
     }
 
     void reelInGrapple() {
