@@ -9,6 +9,7 @@ public class Player : MonoBehaviour
     public LineRenderer lr;
     public DistanceJoint2D dj;
     public Camera cam;
+    public Animator animator;
 
     public int health = 3;
 
@@ -59,7 +60,20 @@ public class Player : MonoBehaviour
     }
 
 
+    // Animation
+    public enum AnimationID {
+        idle = 0,
+        run = 1,
+        jump = 2,
+        grapple = 3,
+    }
 
+    public AnimationID curAnimation = AnimationID.idle;
+
+
+
+
+    // Physics
     bool isGrounded() {  //generates a box slighty below the player and checks if it hit a collider (box casting)
         Collider2D hit = Physics2D.BoxCast((Vector2)transform.position, new Vector2(Math.Abs(transform.localScale.x) * 0.7f, transform.localScale.y), 0, -Vector2.up, 0.05f).collider;
         if (hit != null && hit.isTrigger == false) return true;
@@ -85,12 +99,17 @@ public class Player : MonoBehaviour
         if (curState == states.grounded && !isGrounded()) curState = states.airborne;
 
         // if the player is grounded then move with the grounded move stats
-        if (canDoAction(actions.groundMove)) {
+        if (canDoAction(actions.groundMove) && (xInput == 0 || Math.Sign(xInput) != Math.Sign(rb.velocity.x))) {
 
             // make sure the player doesn't slide when there is no input in the direction it is going
-            if (xInput == 0 || Math.Sign(xInput) != Math.Sign(rb.velocity.x)) rb.velocity = Vector2.zero;
+            rb.velocity = Vector2.zero;
 
-            // apply movement
+            // manage animations
+            animator.SetInteger("curState", (int)AnimationID.idle);   
+        }
+
+        if (canDoAction(actions.groundMove) && xInput != 0) {
+
             if (groundMoveSpeed * xInput * Time.fixedDeltaTime < maxGroundMoveSpeed) 
                 rb.velocity += groundMoveSpeed * xInput * Vector2.right * Time.fixedDeltaTime;
             else 
@@ -98,12 +117,18 @@ public class Player : MonoBehaviour
 
             // manage which direction the player is facing
             if (rb.velocity.x < 0) curDirection = direction.left;
-            if (rb.velocity.x > 0) curDirection = direction.right;           
+            if (rb.velocity.x > 0) curDirection = direction.right;  
+
+            // manage animations
+            animator.SetInteger("curState", (int)AnimationID.run);  
         }
 
         if (canDoAction(actions.jump) && yInput == 1) {
             rb.velocity += jumpSpeed * Vector2.up;
             curState = states.airborne;
+
+            // manage animations
+            animator.SetInteger("curState", (int)AnimationID.jump);  
         }
 
 
@@ -120,9 +145,16 @@ public class Player : MonoBehaviour
         if (Input.GetKey(KeyCode.Space) && canDoAction(actions.reelInGrapple)) reelInGrapple();
         else reelInBuiltUpVelocity = 0;
 
+
+        // manage direction
+        if (xInput < 0) transform.localScale = new Vector3(Math.Abs(transform.localScale.x) * -1, transform.localScale.y, transform.localScale.z);
+        if (xInput > 0) transform.localScale = new Vector3(Math.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
+
         //Debug
         print(curState);
         // print(curDirection);
+
+
     }
 
     void reelInGrapple() {
@@ -191,10 +223,15 @@ public class Player : MonoBehaviour
         }
     }
 
+
     void dead()
     {
         Destroy(this);
     }
+
+    // void manageAnimations() {
+    //     if (curState == grounded)
+    // }
 
     // void swing()
     // {
