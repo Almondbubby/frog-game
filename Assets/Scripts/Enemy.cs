@@ -6,7 +6,7 @@ public class Enemy : MonoBehaviour
 {
     public Rigidbody2D rb;
     int dir = 1;
-    public int speed = 30;
+    public int speed = 60;
     void FixedUpdate()
     {
         Vector3 velo = new Vector3(1, 0, 0);
