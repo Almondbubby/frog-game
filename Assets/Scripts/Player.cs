@@ -9,9 +9,13 @@ public class Player : MonoBehaviour
     public LineRenderer lr;
     public DistanceJoint2D dj;
     public Camera cam;
-    public Animator animator;
-
+    public Animator animator; 
+    public SpriteRenderer thisRenderer;
     public int health = 3;
+
+    public Animator grapplingHeadAnimator;
+    public SpriteRenderer grapplingBodyRenderer; public SpriteRenderer grapplingHeadRenderer;
+
 
 
     //movement
@@ -65,7 +69,9 @@ public class Player : MonoBehaviour
         idle = 0,
         run = 1,
         jump = 2,
-        grapple = 3,
+        falling = 3,
+        rising = 4,
+        grapple = 5,
     }
 
     public AnimationID curAnimation = AnimationID.idle;
@@ -136,6 +142,13 @@ public class Player : MonoBehaviour
         
         if (canDoAction(actions.airMove)) {
             rb.velocity += airMoveSpeed * xInput * Vector2.right * Time.fixedDeltaTime;
+
+            if (rb.velocity.y < 0) 
+                animator.SetInteger("curState", (int)AnimationID.falling);
+            if (rb.velocity.y > 0)
+                animator.SetInteger("curState", (int)AnimationID.rising);
+                  
+            
         }
 
 
@@ -146,9 +159,9 @@ public class Player : MonoBehaviour
         else reelInBuiltUpVelocity = 0;
 
 
-        // manage direction
-        if (xInput < 0) transform.localScale = new Vector3(Math.Abs(transform.localScale.x) * -1, transform.localScale.y, transform.localScale.z);
-        if (xInput > 0) transform.localScale = new Vector3(Math.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
+        // manage direction (TODO: add a special case for when the frog is grappling)
+        if (rb.velocity.x < 0) transform.localScale = new Vector3(Math.Abs(transform.localScale.x) * -1, transform.localScale.y, transform.localScale.z);
+        if (rb.velocity.x > 0) transform.localScale = new Vector3(Math.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
 
         //Debug
         print(curState);
@@ -179,15 +192,14 @@ public class Player : MonoBehaviour
             dj.connectedBody = hit.rigidbody;
             connectionPoint = hit.point;
 
-
-            print(connectionPoint);
-            print(dj.connectedBody.transform.position);
-
             dj.connectedAnchor = new Vector2((connectionPoint.x/2) - dj.connectedBody.transform.position.x, 0f);
         }
         
         curState = states.grappling;
+        grapplingBodyRenderer.enabled = true; grapplingHeadRenderer.enabled = true; thisRenderer.enabled = false;
 
+        // grapplingHeadAnimator.transform.rotation.eulerAngles = new Vector3(0, 0, )
+        grapplingHeadAnimator.SetInteger("curState", (int)AnimationID.grapple);
     }
 
     void release() {
@@ -202,6 +214,12 @@ public class Player : MonoBehaviour
         dj.connectedBody = rb;
         dj.connectedAnchor = Vector2.zero;
         connectionPoint = Vector2.zero;
+
+        grapplingBodyRenderer.enabled = false; grapplingHeadRenderer.enabled = false; thisRenderer.enabled = true;
+        if (rb.velocity.y < 0) 
+            animator.SetInteger("curState", (int)AnimationID.falling);
+        if (rb.velocity.y > 0)
+            animator.SetInteger("curState", (int)AnimationID.rising);
 
     }
 
