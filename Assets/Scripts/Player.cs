@@ -12,6 +12,7 @@ public class Player : MonoBehaviour
     public Animator animator; 
     public SpriteRenderer thisRenderer;
     public int health = 3;
+    public Vector2 levelBeginning;
 
     public Animator grapplingHeadAnimator;
     public SpriteRenderer grapplingBodyRenderer; public SpriteRenderer grapplingHeadRenderer;
@@ -229,6 +230,9 @@ public class Player : MonoBehaviour
         {
             damage(1);
         }
+        if(collision.gameObject.tag == "Obstacle"){
+            dead();
+        }
     }
 
     void damage(int dmg)
@@ -244,7 +248,9 @@ public class Player : MonoBehaviour
 
     void dead()
     {
-        Destroy(this);
+        //Destroy(this);
+        vx = vy = ax = ay = 0;
+        rb.position = levelBeginning;
     }
 
     // void manageAnimations() {
