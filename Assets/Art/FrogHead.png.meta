@@ -108,12 +108,12 @@ TextureImporter:
       name: FrogHead_0
       rect:
         serializedVersion: 2
-        x: 0
+        x: 1
         y: 0
-        width: 260
-        height: 160
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+        width: 244
+        height: 158
+      alignment: 6
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -129,12 +129,12 @@ TextureImporter:
       name: FrogHead_1
       rect:
         serializedVersion: 2
-        x: 260
+        x: 261
         y: 0
-        width: 260
-        height: 160
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+        width: 244
+        height: 158
+      alignment: 6
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -150,12 +150,12 @@ TextureImporter:
       name: FrogHead_2
       rect:
         serializedVersion: 2
-        x: 520
+        x: 521
         y: 0
-        width: 260
-        height: 160
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+        width: 252
+        height: 158
+      alignment: 6
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -171,12 +171,12 @@ TextureImporter:
       name: FrogHead_3
       rect:
         serializedVersion: 2
-        x: 780
+        x: 777
         y: 0
-        width: 260
-        height: 160
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+        width: 256
+        height: 158
+      alignment: 6
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
