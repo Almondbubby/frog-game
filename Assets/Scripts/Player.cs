@@ -161,11 +161,17 @@ public class Player : MonoBehaviour
 
 
         // manage direction (TODO: add a special case for when the frog is grappling)
-        if (rb.velocity.x < 0) transform.localScale = new Vector3(Math.Abs(transform.localScale.x) * -1, transform.localScale.y, transform.localScale.z);
-        if (rb.velocity.x > 0) transform.localScale = new Vector3(Math.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
+        if (curState == states.grappling) {
+            if (transform.position.x < dj.connectedBody.transform.position.x) transform.localScale = new Vector3(Math.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
+            if (transform.position.x > dj.connectedBody.transform.position.x) transform.localScale = new Vector3(Math.Abs(transform.localScale.x) * -1, transform.localScale.y, transform.localScale.z);
+        }
+        else {
+            if (rb.velocity.x < 0) transform.localScale = new Vector3(Math.Abs(transform.localScale.x) * -1, transform.localScale.y, transform.localScale.z);
+            if (rb.velocity.x > 0) transform.localScale = new Vector3(Math.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
+        }
 
         //Debug
-        print(curState);
+        // print(curState);
         // print(curDirection);
 
 
@@ -199,7 +205,12 @@ public class Player : MonoBehaviour
         curState = states.grappling;
         grapplingBodyRenderer.enabled = true; grapplingHeadRenderer.enabled = true; thisRenderer.enabled = false;
 
-        // grapplingHeadAnimator.transform.rotation.eulerAngles = new Vector3(0, 0, )
+        // Vector2 distBetweenHeadandPoint = connectionPoint - (Vector2)grapplingHeadAnimator.transform.position;
+        Vector2 headConnectionDist = connectionPoint - (Vector2)grapplingHeadRenderer.transform.parent.transform.position;
+        double headAngle = Math.Abs(Math.Atan(Math.Abs(headConnectionDist.y/headConnectionDist.x)) * 180/Math.PI);
+        print(grapplingHeadRenderer.transform.parent.transform.position);
+        print("headAngle" + headAngle);
+        grapplingHeadRenderer.transform.eulerAngles = new Vector3(0, 0, -1 *(float)headAngle);
         grapplingHeadAnimator.SetInteger("curState", (int)AnimationID.grapple);
     }
 
@@ -224,7 +235,7 @@ public class Player : MonoBehaviour
 
     }
 
-    private void OnCollisionEnter2D(Collision2D collision)
+    private void OnTriggerEnter2D(Collider2D collision)
     {
         if(collision.gameObject.tag == "Enemy")
         {
