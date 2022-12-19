@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class fly : MonoBehaviour
 {
+    public GameObject destroy;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -20,7 +22,7 @@ public class fly : MonoBehaviour
     {
         if(collision.gameObject.tag == "Player")
         {
-            Destroy(this);    
+            Destroy(destroy);    
         }
     }
 }
