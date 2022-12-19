@@ -13,6 +13,8 @@ public class Player : MonoBehaviour
     public SpriteRenderer thisRenderer;
     public int health = 3;
     public Vector2 levelBeginning;
+    private Vector2 lockedMousePos; //"fly" stuff
+    private bool flyFlag;
 
     public Animator grapplingHeadAnimator;
     public SpriteRenderer grapplingBodyRenderer; public SpriteRenderer grapplingHeadRenderer;
@@ -43,6 +45,7 @@ public class Player : MonoBehaviour
         grounded,
         airborne,
         grappling,
+        grappleF,
         
     };
     private enum actions {
@@ -57,7 +60,8 @@ public class Player : MonoBehaviour
     private Dictionary<Enum, List<Enum>> stateMap = new Dictionary<Enum, List<Enum>> {
         {states.grounded, new List<Enum>() {actions.groundMove, actions.jump, actions.grapple}},
         {states.airborne, new List<Enum>() {actions.airMove, actions.grapple}},
-        {states.grappling, new List<Enum>() {actions.grapple, actions.reelInGrapple, actions.exitGrapple}}
+        {states.grappling, new List<Enum>() {actions.grapple, actions.reelInGrapple, actions.exitGrapple}},
+        {states.grappleF, new List<Enum>() {actions.grapple, actions.reelInGrapple, actions.exitGrapple, actions.jump}}
     };
 
     bool canDoAction(Enum action) {
@@ -92,6 +96,7 @@ public class Player : MonoBehaviour
     private void Start()
     {
         curState = states.airborne;
+        flyFlag = false;
     }
 
     void FixedUpdate()
@@ -156,6 +161,8 @@ public class Player : MonoBehaviour
         if (Input.GetKey(KeyCode.Mouse0) && canDoAction(actions.grapple)) grapple();
         else if (canDoAction(actions.exitGrapple)) release();
 
+        if(flyFlag == true) grapple();
+
         if (Input.GetKey(KeyCode.Space) && canDoAction(actions.reelInGrapple)) reelInGrapple();
         else reelInBuiltUpVelocity = 0;
 
@@ -184,28 +191,53 @@ public class Player : MonoBehaviour
     }
 
     void grapple() {
+        if(flyFlag == true){
+            //rb.gravityScale = 0.0f;
+            //curState = states.grappleF;
+            rb.velocity = Vector2.zero;
+            transform.position = Vector3.MoveTowards(transform.position, (Vector3)lockedMousePos, 10 * Time.deltaTime);
 
-        Vector2 mousePos = (Vector2)cam.ScreenToWorldPoint(Input.mousePosition);
-        Vector2 playerToMouseDistance = mousePos - (Vector2)transform.position;
-        
-        RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector3.Normalize(playerToMouseDistance), playerToMouseDistance.magnitude);
-        
-        if (connectionPoint != Vector2.zero)
-            lr.SetPositions(new Vector3[] {transform.position, connectionPoint});
-
-        if (!hit.rigidbody) return;
-
-        if (curState != states.grappling) {
-            dj.connectedBody = hit.rigidbody;
-            connectionPoint = hit.point;
-
-            dj.connectedAnchor = new Vector2((connectionPoint.x/2) - dj.connectedBody.transform.position.x, 0f);
+            if(((Vector2)transform.position).Equals(lockedMousePos)){
+                curState = states.grappleF;
+                flyFlag = false;
+            }
         }
-        
-        curState = states.grappling;
-        grapplingBodyRenderer.enabled = true; grapplingHeadRenderer.enabled = true; thisRenderer.enabled = false;
+        else{
+            Vector2 mousePos = (Vector2)cam.ScreenToWorldPoint(Input.mousePosition);
+            Vector2 playerToMouseDistance = mousePos - (Vector2)transform.position;
+            
+            RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector3.Normalize(playerToMouseDistance), playerToMouseDistance.magnitude);
+            
+            if (connectionPoint != Vector2.zero)
+                lr.SetPositions(new Vector3[] {transform.position, connectionPoint});
 
-        // Vector2 distBetweenHeadandPoint = connectionPoint - (Vector2)grapplingHeadAnimator.transform.position;
+            if (!hit.rigidbody) return;
+
+            if (curState != states.grappling || curState != states.grappleF) {
+                dj.connectedBody = hit.rigidbody;
+                connectionPoint = hit.point;
+
+                dj.connectedAnchor = new Vector2((connectionPoint.x/2) - dj.connectedBody.transform.position.x, 0f);
+            }
+
+            if(curState != states.grappleF){
+                curState = states.grappling;
+            }
+            else if(isGrounded()){
+                curState = states.grounded;    
+            }
+
+            // Vector2 distBetweenHeadandPoint = connectionPoint - (Vector2)grapplingHeadAnimator.transform.position;
+           
+            if(hit.collider.gameObject.tag == "fly" && flyFlag == false){
+                //curState = states.grappleF;
+                rb.velocity = Vector2.zero;
+                lockedMousePos = mousePos;
+                transform.position = Vector3.MoveTowards(transform.position, (Vector3)mousePos, 10 * Time.deltaTime);
+                flyFlag = true;
+            }
+        }
+        grapplingBodyRenderer.enabled = true; grapplingHeadRenderer.enabled = true; thisRenderer.enabled = false;
         Vector2 headConnectionDist = connectionPoint - (Vector2)grapplingHeadRenderer.transform.parent.transform.position;
         double headAngle = Math.Abs(Math.Atan(Math.Abs(headConnectionDist.y/headConnectionDist.x)) * 180/Math.PI);
         print(grapplingHeadRenderer.transform.parent.transform.position);
