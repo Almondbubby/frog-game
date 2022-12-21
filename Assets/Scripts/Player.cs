@@ -13,8 +13,7 @@ public class Player : MonoBehaviour
     public SpriteRenderer thisRenderer;
     public int health = 3;
     public Vector2 levelBeginning;
-    private Vector2 lockedMousePos; //"fly" stuff
-    private bool flyFlag;
+    
 
     public Animator grapplingHeadAnimator;
     public SpriteRenderer grapplingBodyRenderer; public SpriteRenderer grapplingHeadRenderer;
@@ -37,7 +36,12 @@ public class Player : MonoBehaviour
     private float reelInBuiltUpVelocity;
     private Vector2 connectionPoint;
     
-
+    //fly stuff
+    private Vector2 lockedMousePos; 
+    private Vector2 lockedHeadDist;
+    //private Vector2 lockedAngle;
+    private bool flyFlag;
+    private float pull = 10f;
 
 
     //state management
@@ -196,47 +200,35 @@ public class Player : MonoBehaviour
             //curState = states.grappleF;
             rb.velocity = Vector2.zero;
             transform.position = Vector3.MoveTowards(transform.position, (Vector3)lockedMousePos, 10 * Time.deltaTime);
-
             if(((Vector2)transform.position).Equals(lockedMousePos)){
+                rb.velocity = (Vector2.Scale(lockedHeadDist, new Vector2(50f, 50f))); //fix later
                 curState = states.grappleF;
                 flyFlag = false;
             }
         }
-        else{
-            Vector2 mousePos = (Vector2)cam.ScreenToWorldPoint(Input.mousePosition);
-            Vector2 playerToMouseDistance = mousePos - (Vector2)transform.position;
-            
-            RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector3.Normalize(playerToMouseDistance), playerToMouseDistance.magnitude);
-            
-            if (connectionPoint != Vector2.zero)
-                lr.SetPositions(new Vector3[] {transform.position, connectionPoint});
+        
+        Vector2 mousePos = (Vector2)cam.ScreenToWorldPoint(Input.mousePosition);
+        Vector2 playerToMouseDistance = mousePos - (Vector2)transform.position;
+        
+        RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector3.Normalize(playerToMouseDistance), playerToMouseDistance.magnitude);
+        
+        if (connectionPoint != Vector2.zero)
+            lr.SetPositions(new Vector3[] {transform.position, connectionPoint});
 
-            if (!hit.rigidbody) return;
+        if (!hit.rigidbody) return;
 
-            if (curState != states.grappling || curState != states.grappleF) {
-                dj.connectedBody = hit.rigidbody;
-                connectionPoint = hit.point;
+        if (curState != states.grappling || curState != states.grappleF) {
+            dj.connectedBody = hit.rigidbody;
+            connectionPoint = hit.point;
 
-                dj.connectedAnchor = new Vector2((connectionPoint.x/2) - dj.connectedBody.transform.position.x, 0f);
-            }
-
-            if(curState != states.grappleF){
-                curState = states.grappling;
-            }
-            else if(isGrounded()){
-                curState = states.grounded;    
-            }
-
-            // Vector2 distBetweenHeadandPoint = connectionPoint - (Vector2)grapplingHeadAnimator.transform.position;
-           
-            if(hit.collider.gameObject.tag == "fly" && flyFlag == false){
-                //curState = states.grappleF;
-                rb.velocity = Vector2.zero;
-                lockedMousePos = mousePos;
-                transform.position = Vector3.MoveTowards(transform.position, (Vector3)mousePos, 10 * Time.deltaTime);
-                flyFlag = true;
-            }
+            dj.connectedAnchor = new Vector2((connectionPoint.x/2) - dj.connectedBody.transform.position.x, 0f);
         }
+
+        if(curState != states.grappleF){
+            curState = states.grappling;
+        }
+
+        // Vector2 distBetweenHeadandPoint = connectionPoint - (Vector2)grapplingHeadAnimator.transform.position;
         grapplingBodyRenderer.enabled = true; grapplingHeadRenderer.enabled = true; thisRenderer.enabled = false;
         Vector2 headConnectionDist = connectionPoint - (Vector2)grapplingHeadRenderer.transform.parent.transform.position;
         double headAngle = Math.Abs(Math.Atan(Math.Abs(headConnectionDist.y/headConnectionDist.x)) * 180/Math.PI);
@@ -244,6 +236,16 @@ public class Player : MonoBehaviour
         print("headAngle" + headAngle);
         grapplingHeadRenderer.transform.eulerAngles = new Vector3(0, 0, -1 *(float)headAngle);
         grapplingHeadAnimator.SetInteger("curState", (int)AnimationID.grapple);
+
+        if(hit.collider.gameObject.tag == "fly" && flyFlag == false){
+            //curState = states.grappleF;
+            rb.velocity = Vector2.zero;
+            lockedMousePos = mousePos;
+            lockedHeadDist = headConnectionDist;
+            transform.position = Vector3.MoveTowards(transform.position, (Vector3)mousePos, 10 * Time.deltaTime);
+            flyFlag = true;
+        }
+    
     }
 
     void release() {
