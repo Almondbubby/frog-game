@@ -21,14 +21,15 @@ public class Player : MonoBehaviour
 
 
     //movement
-    public float groundMoveSpeed, maxGroundMoveSpeed, airMoveSpeed, maxAirMoveSpeed, jumpSpeed; //currently not using a mxAirMoveSpeed
+    public float groundMoveSpeed, maxGroundMoveSpeed, airMoveSpeed, maxAirMoveSpeed, jumpSpeed, swimSpeed; //currently not using a mxAirMoveSpeed
+    public float gravityStrength, waterGravityStrength;
     private float vx, vy, ax, ay; // vx/vy is velocity and ax/ay is acceleration
     private int xInput, yInput;
     private enum direction {
         left,
         right,
     }
-    private direction curDirection = direction.right;
+    direction curDirection = direction.right;
 
 
     //grappling
@@ -50,6 +51,7 @@ public class Player : MonoBehaviour
         airborne,
         grappling,
         grappleF,
+        swim,
         
     };
     private enum actions {
@@ -59,13 +61,15 @@ public class Player : MonoBehaviour
         grapple,
         exitGrapple,
         reelInGrapple,
+        swimMove,
     }
-    private states curState;
+    public states curState;
     private Dictionary<Enum, List<Enum>> stateMap = new Dictionary<Enum, List<Enum>> {
         {states.grounded, new List<Enum>() {actions.groundMove, actions.jump, actions.grapple}},
         {states.airborne, new List<Enum>() {actions.airMove, actions.grapple}},
         {states.grappling, new List<Enum>() {actions.grapple, actions.reelInGrapple, actions.exitGrapple}},
-        {states.grappleF, new List<Enum>() {actions.grapple, actions.reelInGrapple, actions.exitGrapple, actions.jump}}
+        {states.grappleF, new List<Enum>() {actions.grapple, actions.reelInGrapple, actions.exitGrapple, actions.jump}},
+        {states.swim, new List<Enum>() {actions.grapple, actions.reelInGrapple, actions.exitGrapple, actions.swimMove}},
     };
 
     bool canDoAction(Enum action) {
@@ -81,9 +85,10 @@ public class Player : MonoBehaviour
         falling = 3,
         rising = 4,
         grapple = 5,
+        swim = 6,
     }
 
-    public AnimationID curAnimation = AnimationID.idle;
+    // public AnimationID curAnimation = AnimationID.idle;
 
 
 
@@ -101,6 +106,7 @@ public class Player : MonoBehaviour
     {
         curState = states.airborne;
         flyFlag = false;
+        rb.gravityScale = gravityStrength;
     }
 
     void FixedUpdate()
@@ -161,6 +167,13 @@ public class Player : MonoBehaviour
             
         }
 
+        if (canDoAction(actions.swimMove)) {
+            rb.velocity = new Vector2(swimSpeed * xInput, swimSpeed * yInput);
+
+            if (rb.velocity.magnitude > 0) 
+                animator.SetInteger("curState", (int)AnimationID.swim);
+        }
+
 
         if (Input.GetKey(KeyCode.Mouse0) && canDoAction(actions.grapple)) grapple();
         else if (canDoAction(actions.exitGrapple)) release();
@@ -183,7 +196,6 @@ public class Player : MonoBehaviour
 
         //Debug
         // print(curState);
-        // print(curDirection);
 
 
     }
@@ -212,36 +224,42 @@ public class Player : MonoBehaviour
         
         RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector3.Normalize(playerToMouseDistance), playerToMouseDistance.magnitude);
         
-        if (connectionPoint != Vector2.zero)
+        if (connectionPoint != Vector2.zero/* && (curState != states.grappling || curState != states.grappleF)*/)
             lr.SetPositions(new Vector3[] {transform.position, connectionPoint});
 
         if (!hit.rigidbody) return;
 
-        if (curState != states.grappling || curState != states.grappleF) {
+        print("curState: " + curState + "     " + (curState != states.grappling && curState != states.grappleF));
+        if (curState != states.grappling && curState != states.grappleF) {
             dj.connectedBody = hit.rigidbody;
             connectionPoint = hit.point;
 
             dj.connectedAnchor = new Vector2((connectionPoint.x/2) - dj.connectedBody.transform.position.x, 0f);
         }
 
-        if(curState != states.grappleF){
+        if (curState != states.grappleF)
             curState = states.grappling;
-        }
+        
 
+        
         // Vector2 distBetweenHeadandPoint = connectionPoint - (Vector2)grapplingHeadAnimator.transform.position;
-        grapplingBodyRenderer.enabled = true; grapplingHeadRenderer.enabled = true; thisRenderer.enabled = false;
-        Vector2 headConnectionDist = connectionPoint - (Vector2)grapplingHeadRenderer.transform.parent.transform.position;
-        double headAngle = Math.Abs(Math.Atan(Math.Abs(headConnectionDist.y/headConnectionDist.x)) * 180/Math.PI);
-        print(grapplingHeadRenderer.transform.parent.transform.position);
-        print("headAngle" + headAngle);
-        grapplingHeadRenderer.transform.eulerAngles = new Vector3(0, 0, -1 *(float)headAngle);
-        grapplingHeadAnimator.SetInteger("curState", (int)AnimationID.grapple);
+        // grapplingBodyRenderer.enabled = true; grapplingHeadRenderer.enabled = true; thisRenderer.enabled = false;
+
+
+        //failed script for managing the player's head when they are swinging back and forth on a grappling hook
+        // Vector2 headConnectionDist = connectionPoint - (Vector2)grapplingHeadRenderer.transform.parent.transform.position;
+        // double headAngle = Math.Abs(Math.Atan(Math.Abs(headConnectionDist.y/headConnectionDist.x)) * 180/Math.PI);
+        // print(grapplingHeadRenderer.transform.parent.transform.position);
+        // print("headAngle" + headAngle);
+        // grapplingHeadRenderer.transform.eulerAngles = new Vector3(0, 0, -1 *(float)headAngle);
+        // grapplingHeadAnimator.SetInteger("curState", (int)AnimationID.grapple);
+
 
         if(hit.collider.gameObject.tag == "fly" && flyFlag == false){
             //curState = states.grappleF;
             rb.velocity = Vector2.zero;
             lockedMousePos = mousePos;
-            lockedHeadDist = headConnectionDist;
+            // lockedHeadDist = headConnectionDist;
             transform.position = Vector3.MoveTowards(transform.position, (Vector3)mousePos, 10 * Time.deltaTime);
             flyFlag = true;
         }
@@ -262,6 +280,7 @@ public class Player : MonoBehaviour
         connectionPoint = Vector2.zero;
 
         grapplingBodyRenderer.enabled = false; grapplingHeadRenderer.enabled = false; thisRenderer.enabled = true;
+        
         if (rb.velocity.y < 0) 
             animator.SetInteger("curState", (int)AnimationID.falling);
         if (rb.velocity.y > 0)
@@ -269,14 +288,29 @@ public class Player : MonoBehaviour
 
     }
 
-    private void OnTriggerEnter2D(Collider2D collision)
-    {
-        if(collision.gameObject.tag == "Enemy")
-        {
+    void OnTriggerEnter2D(Collider2D collision) {
+
+        if (collision.gameObject.tag == "Enemy") {
             damage(1);
         }
-        if(collision.gameObject.tag == "Obstacle"){
+
+        if (collision.gameObject.tag == "Obstacle"){
             dead();
+        }
+    }
+
+    void OnTriggerStay2D(Collider2D collision) {
+
+        if (collision.gameObject.tag == "Water") {
+            curState = states.swim;
+            rb.gravityScale = waterGravityStrength;
+        }
+    }
+
+    void OnTriggerExit2D(Collider2D collision) {
+
+        if (collision.gameObject.tag == "Water") {
+            rb.gravityScale = gravityStrength;
         }
     }
 
@@ -296,84 +330,4 @@ public class Player : MonoBehaviour
         //Destroy(this);
         vx = vy = ax = ay = 0;
         rb.position = levelBeginning;
-    }
-
-    // void manageAnimations() {
-    //     if (curState == grounded)
-    // }
-
-    // void swing()
-    // {
-    //     Vector2 mousePos = (Vector2)cam.ScreenToWorldPoint(Input.mousePosition);
-    //     if (Input.GetKeyDown(KeyCode.Mouse0))
-    //     {
-    //         //check if theres anything in the way
-    //         RaycastHit2D hit = Physics2D.Raycast(transform.position,mousePos-(Vector2)transform.position);
-
-    //         //check whether mouse is actually on something thats grapplable
-    //         RaycastHit2D check = Physics2D.Raycast(mousePos, Vector2.zero);
-    //         bool good = true;
-    //         if(hit.collider != null && hit.collider.gameObject.layer != 3)
-    //         {
-    //             good = false;
-    //         }
-
-    //         if (hit.collider != null && hit.collider.gameObject.layer == 3 && good && check.collider != null)
-    //         {
-    //             dj.enabled = true;
-    //             dj.connectedAnchor = mousePos;
-    //             lr.enabled = true;
-
-    //             //draw line
-    //             lr.SetPosition(0, transform.position);
-    //             lr.SetPosition(1, mousePos);
-    //         }
-
-
-    //     }
-    //     else if (Input.GetKeyUp(KeyCode.Mouse0))
-    //     {
-    //         dj.enabled = false;
-    //         lr.enabled = false;
-    //     }
-
-    //     if (dj.enabled)
-    //     {
-    //         //update line
-    //         lr.SetPosition(0, transform.position);
-    //     }
-    // }
-    // void grapple()
-    // {
-    //     Vector2 mousePos = (Vector2)cam.ScreenToWorldPoint(Input.mousePosition);
-    //     if (Input.GetKeyDown(KeyCode.Mouse1))
-    //     {
-    //         RaycastHit2D hit = Physics2D.Raycast(transform.position, mousePos - (Vector2)transform.position);
-    //         RaycastHit2D check = Physics2D.Raycast(mousePos, Vector2.zero);
-    //         bool good = true;
-    //         if (hit.collider != null && hit.collider.gameObject.layer != 3)
-    //         {
-    //             good = false;
-    //         }
-
-    //         if (hit.collider != null && hit.collider.gameObject.layer == 3 && good && check.collider != null)
-    //         {
-    //             go = true;
-    //             lr.enabled = true;
-    //             lr.SetPosition(0, transform.position);
-    //             lr.SetPosition(1, mousePos);
-    //         }
-    //     }
-    //     if (Input.GetKeyUp(KeyCode.Mouse1))
-    //     {
-    //         lr.enabled = false;
-    //         go = false;
-    //     }
-
-    //     if (go)
-    //     {
-    //         lr.SetPosition(0, transform.position);
-    //         transform.position = Vector2.MoveTowards(transform.position, mousePos, moveSpeed * Time.deltaTime);
-    //     }
-    // }
-}
+    }}
