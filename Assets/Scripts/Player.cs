@@ -175,7 +175,7 @@ public class Player : MonoBehaviour
         }
 
 
-        if (Input.GetKey(KeyCode.Mouse0) && canDoAction(actions.grapple)) grapple();
+        if (Input.GetKey(KeyCode.Mouse0) && canDoAction(actions.grapple) && flyFlag == false) grapple();
         else if (canDoAction(actions.exitGrapple)) release();
 
         if(flyFlag == true) grapple();
@@ -207,22 +207,19 @@ public class Player : MonoBehaviour
     }
 
     void grapple() {
+        Vector2 mousePos = (Vector2)cam.ScreenToWorldPoint(Input.mousePosition);
+        Vector2 playerToMouseDistance = mousePos - (Vector2)transform.position;
+        
+        RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector3.Normalize(playerToMouseDistance), playerToMouseDistance.magnitude);
+
         if(flyFlag == true){
             //rb.gravityScale = 0.0f;
             //curState = states.grappleF;
             rb.velocity = Vector2.zero;
             transform.position = Vector3.MoveTowards(transform.position, (Vector3)lockedMousePos, 10 * Time.deltaTime);
-            if(((Vector2)transform.position).Equals(lockedMousePos)){
-                rb.velocity = (Vector2.Scale(lockedHeadDist, new Vector2(50f, 50f))); //fix later
-                curState = states.grappleF;
-                flyFlag = false;
-            }
+            OnTriggerExit2D(hit.collider);
         }
         
-        Vector2 mousePos = (Vector2)cam.ScreenToWorldPoint(Input.mousePosition);
-        Vector2 playerToMouseDistance = mousePos - (Vector2)transform.position;
-        
-        RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector3.Normalize(playerToMouseDistance), playerToMouseDistance.magnitude);
         
         if (connectionPoint != Vector2.zero/* && (curState != states.grappling || curState != states.grappleF)*/)
             lr.SetPositions(new Vector3[] {transform.position, connectionPoint});
@@ -297,6 +294,7 @@ public class Player : MonoBehaviour
         if (collision.gameObject.tag == "Obstacle"){
             dead();
         }
+        
     }
 
     void OnTriggerStay2D(Collider2D collision) {
@@ -311,6 +309,11 @@ public class Player : MonoBehaviour
 
         if (collision.gameObject.tag == "Water") {
             rb.gravityScale = gravityStrength;
+        }
+        if(collision.gameObject.tag == "fly"){
+                rb.velocity = (Vector2.Scale(lockedHeadDist, new Vector2(50f, 50f))); //fix later
+                curState = states.grappleF;
+                flyFlag = false;
         }
     }
 
