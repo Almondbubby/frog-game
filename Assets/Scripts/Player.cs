@@ -23,6 +23,7 @@ public class Player : MonoBehaviour
     //movement
     public float groundMoveSpeed, maxGroundMoveSpeed, airMoveSpeed, maxAirMoveSpeed, jumpSpeed, swimSpeed; //currently not using a mxAirMoveSpeed
     public float gravityStrength, waterGravityStrength;
+    public bool canJump = false;
     private float vx, vy, ax, ay; // vx/vy is velocity and ax/ay is acceleration
     private int xInput, yInput;
     private enum direction {
@@ -34,6 +35,7 @@ public class Player : MonoBehaviour
 
     //grappling
     public float reelInGrappleVelocity;
+    public Vector2 tongueOffset;
     private float reelInBuiltUpVelocity;
     private Vector2 connectionPoint;
     
@@ -96,7 +98,10 @@ public class Player : MonoBehaviour
     // Physics
     bool isGrounded() {  //generates a box slighty below the player and checks if it hit a collider (box casting)
         Collider2D hit = Physics2D.BoxCast((Vector2)transform.position, new Vector2(Math.Abs(transform.localScale.x) * 0.7f, transform.localScale.y), 0, -Vector2.up, 0.05f).collider;
-        if (hit != null && hit.isTrigger == false) return true;
+        if (hit != null && hit.isTrigger == false) {
+            canJump = true;
+            return true;
+        }
         return false;
     }
 
@@ -111,14 +116,15 @@ public class Player : MonoBehaviour
 
     void FixedUpdate()
     {
+        bool isGrounded_ = isGrounded();
 
         xInput = Math.Sign(Input.GetAxis("Horizontal"));
         yInput = Math.Sign(Input.GetAxis("Vertical"));
 
 
         // make sure the game knows when the player is grounded or not
-        if (curState == states.airborne && isGrounded()) curState = states.grounded;
-        if (curState == states.grounded && !isGrounded()) curState = states.airborne;
+        if (curState == states.airborne && isGrounded_) curState = states.grounded;
+        if (curState == states.grounded && !isGrounded_) curState = states.airborne;
 
         // if the player is grounded then move with the grounded move stats
         if (canDoAction(actions.groundMove) && (xInput == 0 || Math.Sign(xInput) != Math.Sign(rb.velocity.x))) {
@@ -145,7 +151,10 @@ public class Player : MonoBehaviour
             animator.SetInteger("curState", (int)AnimationID.run);  
         }
 
-        if (canDoAction(actions.jump) && yInput == 1) {
+        // canJump overrides the state machine 
+        if ((canDoAction(actions.jump) || canJump) && yInput == 1) {
+            canJump = false;
+            rb.velocity = new Vector2(rb.velocity.x, 0); 
             rb.velocity += jumpSpeed * Vector2.up;
             curState = states.airborne;
 
@@ -175,20 +184,20 @@ public class Player : MonoBehaviour
         }
 
 
-        if (Input.GetKey(KeyCode.Mouse0) && canDoAction(actions.grapple) && flyFlag == false) grapple();
+        if (Input.GetKey(KeyCode.Mouse0) && canDoAction(actions.grapple) /*&& flyFlag == false*/) grapple();
         else if (canDoAction(actions.exitGrapple)) release();
+        // if (flyFlag == true) grapple();
 
-        if(flyFlag == true) grapple();
-
-        if (Input.GetKey(KeyCode.Space) && canDoAction(actions.reelInGrapple)) reelInGrapple();
+        if ((Input.GetKey(KeyCode.Space) && canDoAction(actions.reelInGrapple)) ||  curState == states.grappleF) reelInGrapple();
         else reelInBuiltUpVelocity = 0;
 
 
         // manage direction (TODO: add a special case for when the frog is grappling)
         if (curState == states.grappling) {
-            if (transform.position.x < dj.connectedBody.transform.position.x) transform.localScale = new Vector3(Math.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
-            if (transform.position.x > dj.connectedBody.transform.position.x) transform.localScale = new Vector3(Math.Abs(transform.localScale.x) * -1, transform.localScale.y, transform.localScale.z);
+            if (transform.position.x < dj.connectedAnchor.x + dj.connectedBody.transform.position.x) transform.localScale = new Vector3(Math.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
+            if (transform.position.x > dj.connectedAnchor.x + dj.connectedBody.transform.position.x) transform.localScale = new Vector3(Math.Abs(transform.localScale.x) * -1, transform.localScale.y, transform.localScale.z);
         }
+
         else {
             if (rb.velocity.x < 0) transform.localScale = new Vector3(Math.Abs(transform.localScale.x) * -1, transform.localScale.y, transform.localScale.z);
             if (rb.velocity.x > 0) transform.localScale = new Vector3(Math.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
@@ -212,54 +221,69 @@ public class Player : MonoBehaviour
         
         RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector3.Normalize(playerToMouseDistance), playerToMouseDistance.magnitude);
 
-        if(flyFlag == true){
-            //rb.gravityScale = 0.0f;
-            //curState = states.grappleF;
-            rb.velocity = Vector2.zero;
-            transform.position = Vector3.MoveTowards(transform.position, (Vector3)lockedMousePos, 10 * Time.deltaTime);
-            OnTriggerExit2D(hit.collider);
+        // if (flyFlag == true){
+        //     //rb.gravityScale = 0.0f;
+        //     //curState = states.grappleF;
+        //     print("");
+        //     dj.distance -= 10 * Time.deltaTime;
+        //     return;
+
+        //     // rb.velocity = Vector2.zero;
+        //     // transform.position = Vector3.MoveTowards(transform.position, (Vector3)lockedMousePos, 10 * Time.deltaTime);
+        //     // OnTriggerExit2D(hit.collider);
+        // }
+
+        
+        if (connectionPoint != Vector2.zero/* && (curState != states.grappling || curState != states.grappleF)*/) {
+            Vector3 lineStart = new Vector3(transform.position.x + tongueOffset.x * transform.localScale.x, transform.position.y + tongueOffset.y, 0f);
+            lr.SetPositions(new Vector3[] {lineStart, connectionPoint});
         }
-        
-        
-        if (connectionPoint != Vector2.zero/* && (curState != states.grappling || curState != states.grappleF)*/)
-            lr.SetPositions(new Vector3[] {transform.position, connectionPoint});
 
-        if (!hit.rigidbody) return;
 
-        print("curState: " + curState + "     " + (curState != states.grappling && curState != states.grappleF));
+        // check if the object is illegal to grapple with
+        // if you are already grappling with another object, just bail out
+        if ((!hit.rigidbody || !(hit.collider.gameObject.layer == 3) /*Grapplable*/ || !hit.collider.isTrigger) && dj.connectedBody == rb) return;
+
+        // print("curState: " + curState + "     " + (curState != states.grappling && curState != states.grappleF));
         if (curState != states.grappling && curState != states.grappleF) {
             dj.connectedBody = hit.rigidbody;
             connectionPoint = hit.point;
 
-            dj.connectedAnchor = new Vector2((connectionPoint.x/2) - dj.connectedBody.transform.position.x, 0f);
+            print(dj.connectedBody.transform.position.x);
+            dj.connectedAnchor = new Vector2((connectionPoint.x-dj.connectedBody.transform.position.x)/2 /*+ dj.connectedBody.transform.position.x*/, 0f);
         }
-
-        if (curState != states.grappleF)
-            curState = states.grappling;
         
 
+        // controls the frog's head angle when he is grappling
+        // it works don't question it
+        grapplingBodyRenderer.enabled = true; grapplingHeadRenderer.enabled = true; thisRenderer.enabled = false;
+
+        Vector2 headConnectionDisplacement = connectionPoint - (Vector2)grapplingHeadRenderer.transform.parent.transform.position;
+        double headAngle = Math.Abs(Math.Atan(Math.Abs(headConnectionDisplacement.y/headConnectionDisplacement.x)) * 180/Math.PI);
+
+        headAngle = Math.Clamp(Math.Abs((float)headAngle) * transform.localScale.x, -90, 90);
+        grapplingHeadRenderer.transform.eulerAngles = new Vector3(0, 0, (float)headAngle);
+        grapplingHeadAnimator.SetInteger("curState", (int)AnimationID.grapple);
+
         
-        // Vector2 distBetweenHeadandPoint = connectionPoint - (Vector2)grapplingHeadAnimator.transform.position;
-        // grapplingBodyRenderer.enabled = true; grapplingHeadRenderer.enabled = true; thisRenderer.enabled = false;
-
-
-        //failed script for managing the player's head when they are swinging back and forth on a grappling hook
-        // Vector2 headConnectionDist = connectionPoint - (Vector2)grapplingHeadRenderer.transform.parent.transform.position;
-        // double headAngle = Math.Abs(Math.Atan(Math.Abs(headConnectionDist.y/headConnectionDist.x)) * 180/Math.PI);
-        // print(grapplingHeadRenderer.transform.parent.transform.position);
-        // print("headAngle" + headAngle);
-        // grapplingHeadRenderer.transform.eulerAngles = new Vector3(0, 0, -1 *(float)headAngle);
-        // grapplingHeadAnimator.SetInteger("curState", (int)AnimationID.grapple);
-
-
-        if(hit.collider.gameObject.tag == "fly" && flyFlag == false){
-            //curState = states.grappleF;
-            rb.velocity = Vector2.zero;
-            lockedMousePos = mousePos;
-            // lockedHeadDist = headConnectionDist;
-            transform.position = Vector3.MoveTowards(transform.position, (Vector3)mousePos, 10 * Time.deltaTime);
-            flyFlag = true;
+        if (dj.connectedBody.gameObject.tag == "fly" && dj.distance < 0.05) {
+            // destroy the fly and reset the distance joint if you hit the fly
+            Destroy(dj.connectedBody.gameObject); dj.connectedBody = rb;
+            canJump = true;
+            release();
         }
+        else if (dj.connectedBody.gameObject.tag == "fly") curState = states.grappleF;
+        else curState = states.grappling;
+
+        // if(dj.connectedBody.gameObject.tag == "fly" && flyFlag == false){
+        //     //curState = states.grappleF;
+        //     // rb.velocity = Vector2.zero;
+        //     // lockedMousePos = mousePos;
+        //     // lockedHeadDist = headConnectionDist;
+        //     dj.distance -= 10 * Time.deltaTime;
+        //     // transform.position = Vector3.MoveTowards(transform.position, (Vector3)mousePos, 10 * Time.deltaTime);
+        //     flyFlag = true;
+        // }
     
     }
 
@@ -294,6 +318,10 @@ public class Player : MonoBehaviour
         if (collision.gameObject.tag == "Obstacle"){
             dead();
         }
+        // if (collision.gameObject.tag == "fly") {
+        //     print("hi");
+        //     Destroy(collision.gameObject);
+        // }
         
     }
 
@@ -310,11 +338,11 @@ public class Player : MonoBehaviour
         if (collision.gameObject.tag == "Water") {
             rb.gravityScale = gravityStrength;
         }
-        if(collision.gameObject.tag == "fly"){
-                rb.velocity = (Vector2.Scale(lockedHeadDist, new Vector2(50f, 50f))); //fix later
-                curState = states.grappleF;
-                flyFlag = false;
-        }
+        // if(collision.gameObject.tag == "fly"){
+        //     rb.velocity = (Vector2.Scale(lockedHeadDist, new Vector2(50f, 50f))); //fix later
+        //     curState = states.grappleF;
+        //     flyFlag = false;
+        // }
     }
 
     void damage(int dmg)
