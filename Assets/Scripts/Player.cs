@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class Player : MonoBehaviour
 {
@@ -333,4 +334,5 @@ public class Player : MonoBehaviour
         //Destroy(this);
         vx = vy = ax = ay = 0;
         rb.position = levelBeginning;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }}
